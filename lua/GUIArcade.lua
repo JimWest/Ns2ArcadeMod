@@ -19,16 +19,19 @@ function GUIArcade:Initialize()
     // create background + game
     self:InitializeBackground()
     
-    
     self.game = Snake()
     self.game:OnCreate(self:GetBackground())
+
 end
 
 function GUIArcade:InitializeBackground()
     GUI.SetSize(512, 512)
     self.background = GUIManager:CreateGraphicItem()
     self.background:SetTexture("ui/menu_background.dds")
+    self.background:SetAnchor(GUIItem.Middle, GUIItem.Center)
     self.background:SetSize(Vector(512, 512,  0))
+    self.background:SetPosition(Vector(-GUIScale(512)/ 2, -GUIScale(512)/ 2, 0))
+    self.background:SetIsVisible(false)
 end
 
 
@@ -42,6 +45,14 @@ end
 
 function GUIArcade:SetIsVisible(setIsVisible)
     self.background:SetIsVisible(setIsVisible)
+    SetMoveInputBlocked(setIsVisible)
+    
+    if setIsVisible then   
+        if self.game then
+            self.game:ResetGame()
+        end
+    end
+    
 end
 
 function GUIArcade:GetBackground()
@@ -52,13 +63,12 @@ end
 function GUIArcade:Update(deltaTime)
     // update game
     
-    if self.background:GetIsVisible() then        
-        Client.GetLocalPlayer():BlockMove()
+    if self.background:GetIsVisible() then   
+        if self.game then
+            self.game:OnUpdate(deltaTime)
+        end
     end
     
-    if self.game then
-        self.game:OnUpdate(deltaTime)
-    end
 end
 
 

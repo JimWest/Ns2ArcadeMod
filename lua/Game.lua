@@ -15,6 +15,10 @@ function Game:OnCreate(canvas)
     self.pressedKey = {}
 end
 
+function Game:ResetGame()
+    self.pressedKey = {}
+end
+
 function Game:OnDestroy()
 end
 
@@ -28,10 +32,16 @@ function Game:GetAllowedKeys()
 end
 
 function Game:SendKeyEvent(key, down)
-    //if down then
+
+    // ESC key is pre reserved for aborting the game
+    if down and key == InputKey.X then        
+        Client.GetLocalPlayer():SetArcadeGUIVisible(false)
+    else
         // only save allowed keys
         if down and table.contains(self:GetAllowedKeys(), key) then
             table.insert(self.pressedKey, key)
         end
-    //end
+        
+    end
+
 end

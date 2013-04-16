@@ -13,7 +13,7 @@
 //________________________________
 
 Script.Load("lua/Class.lua")
-Script.Load("lua/ThreeDeeMenuMixin.lua")
+Script.Load("lua/ArcadeMixin.lua")
 
 local onInitialized = Player.OnInitialized
 function OverridePlayerOnInitialized(self)
@@ -21,21 +21,10 @@ function OverridePlayerOnInitialized(self)
     onInitialized(self)
 
     if Client and self:GetIsLocalPlayer() then
-        InitMixin(self, ThreeDeeMenuMixin)
+        InitMixin(self, ArcadeMixin)
     end
 
 end
 
 Class_ReplaceMethod("Player", "OnInitialized", OverridePlayerOnInitialized)
 
-
-function PlayerUI_GetBuyMenuDisplaying()
-
-    local player = Client.GetLocalPlayer()    
-    if player and HasMixin(player, "ThreeDeeMenu") then
-        return player:GetIsLookingAtMenu()
-    end
-
-    return false
-    
-end

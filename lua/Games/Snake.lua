@@ -12,6 +12,8 @@ Script.Load("lua/Game.lua")
 class 'Snake' (Game)
 
 local kMinMove = 16
+local borderOffset = 16
+
 local kUpdateRate = 0.1
 local startSpeed = 1
 local kMovement = enum( {'Up', 'Down', 'Left', 'Right'} )
@@ -26,7 +28,7 @@ local kMovementVector = {
 function Snake:OnCreate(canvas)
     Game.OnCreate(self, canvas)
     self:ResetGame()
-    self:CreateScore()
+    self:CreateTexts()
 end
 
 function Snake:ResetGame()
@@ -34,9 +36,24 @@ function Snake:ResetGame()
     self.lost = false
     self.score = 0
     self.speed = startSpeed
+    
     // elements of snake in a table
+    if self.snake then
+        for i, element in ipairs(self.snake) do
+            GUI.DestroyItem(element)
+            element = nil
+        end
+    end
     self.snake = {}
+	
+	if self.apple then
+	    GUI.DestroyItem(self.apple)
+	    self.apple = nil    
+    end
+    
+
     self.movement = kMovement.Right
+	self.lastUpdate = nil
 	
 	// add 2 snake elements
 	self:AddSnakeElement(Vector(64, 0,0))
@@ -44,6 +61,10 @@ function Snake:ResetGame()
 	self:AddSnakeElement(Vector(32,0,0))
 	self:AddSnakeElement(Vector(16,0,0))
 	self:AddSnakeElement(Vector(0,0,0))
+
+    if self.lostScreen then
+        self.lostScreen:SetIsVisible(false)
+    end
 	
 end
 
@@ -51,7 +72,8 @@ function Snake:GetAllowedKeys()
     return {InputKey.W,
             InputKey.A,
             InputKey.S,
-            InputKey.D
+            InputKey.D,
+            InputKey.R
             }
 end
 
@@ -60,7 +82,6 @@ function Snake:OnUpdate(deltaTime)
     // main game loop, called every tick from the GUIArcade
     
     self:UpdateScores()
-    self:CheckApple()
     
 	// only look at last key
     local key = self.pressedKey[#self.pressedKey]
@@ -81,11 +102,20 @@ function Snake:OnUpdate(deltaTime)
             if self.movement ~= kMovement.Left then
                 self.movement = kMovement.Right
             end
+        elseif key == InputKey.R then
+            // restart if lost
+            if self.lost then
+                self:ResetGame()
+            end
+        
         end
+        
     end
     
     // check if its time to move 
     if not self.lost and (not self.lastUpdate or Shared.GetTime() - self.lastUpdate > kUpdateRate) then
+    
+        self:CheckApple()
     
         // 3 move every element    
         local oldPosition = nil
@@ -94,6 +124,7 @@ function Snake:OnUpdate(deltaTime)
         // move first element and then move alle elements to the n+1 old position
         for i, snakeElement in ipairs(self.snake) do
             if snakeElement then
+            
                 local tempPosition = snakeElement:GetPosition()
                 
                 if oldPosition then
@@ -104,15 +135,15 @@ function Snake:OnUpdate(deltaTime)
                     local headMove = snakeElement:GetPosition() + (moveVector) 
                     local canvasSize = self.canvas:GetSize()
                     
-                    if headMove.x > canvasSize.x -  kMinMove then
-                        headMove.x = 0 
-                    elseif headMove.x < 0 then
-                        headMove.x = canvasSize.x - kMinMove 
+                    if headMove.x > canvasSize.x -  kMinMove - borderOffset then
+                        headMove.x = 0 + borderOffset 
+                    elseif headMove.x < 0 + borderOffset then
+                        headMove.x = canvasSize.x - kMinMove - borderOffset
                         
-                    elseif headMove.y > canvasSize.y -  kMinMove then
-                        headMove.y =  0
-                    elseif headMove.y < 0 then
-                        headMove.y =  canvasSize.y - kMinMove 
+                    elseif headMove.y > canvasSize.y -  kMinMove - borderOffset then
+                        headMove.y =  0 + borderOffset 
+                    elseif headMove.y < 0 + borderOffset then
+                        headMove.y =  canvasSize.y - kMinMove  - borderOffset
                     end
                     
                     snakeElement:SetPosition(headMove)
@@ -127,7 +158,7 @@ function Snake:OnUpdate(deltaTime)
                             if i > 1 then
                                 if checkPosition == snakeElementCollision:GetPosition() then
                                     self:GameOver()
-                                    break
+                                    return
                                 end
                             end
                         end                        
@@ -149,13 +180,23 @@ function Snake:OnUpdate(deltaTime)
         
 end
 
-function Snake:CreateScore()
+function Snake:CreateTexts()
 	self.scores = GUIManager:CreateTextItem()
 	self.scores:SetText("Score: " .. self.score)
 	self.scores:SetFontSize(32)
     //self.apple:SetColor(ColorIntToColor(kAlienTeamColor))
-	self.scores:SetPosition(position or Vector(16 , 16, 0))
+	self.scores:SetPosition(position or Vector(8 , 8, 0))
 	self.canvas:AddChild(self.scores)
+	
+	    
+    local canvasSize = self.canvas:GetSize()    
+	self.lostScreen = GUIManager:CreateTextItem()
+	self.lostScreen:SetText("LOST !! \n\n Press R to restart the match")
+	self.lostScreen:SetFontSize(128)
+    //self.apple:SetColor(ColorIntToColor(kAlienTeamColor))
+	self.lostScreen:SetPosition(position or Vector((canvasSize.x / 2) - 10 , canvasSize.y / 2, 0))
+	self.lostScreen:SetIsVisible(false)
+	self.canvas:AddChild(self.lostScreen)
 end
 
 function Snake:UpdateScores()
@@ -179,8 +220,8 @@ end
 function Snake:CheckApple()
     if not self.apple then
         local canvasSize = self.canvas:GetSize()
-        local randX = math.random(0, (canvasSize.x -  kMinMove) / kMinMove ) * kMinMove
-        local randY = math.random(0, (canvasSize.y -  kMinMove) / kMinMove ) * kMinMove
+        local randX = math.random(0 + borderOffset , (canvasSize.x -  kMinMove - borderOffset ) / kMinMove ) * kMinMove
+        local randY = math.random(0 + borderOffset , (canvasSize.y -  kMinMove -  borderOffset ) / kMinMove ) * kMinMove
         
         self.apple = GUIManager:CreateGraphicItem()
         self.apple:SetTexture("ui/apple.png")
@@ -200,23 +241,8 @@ function Snake:HitApple(oldPosition)
 end
 
 function Snake:GameOver()
+    self:ResetGame()    
     self.lost = true
-	for i, element in ipairs(self.snake) do
-		GUI.DestroyItem(element)
-		element = nil
-	end
-	
-	GUI.DestroyItem(self.apple)
-	self.apple = nil
-    self:ResetGame()
-    
-    local canvasSize = self.canvas:GetSize()
-    
-	self.lostScreen = GUIManager:CreateTextItem()
-	self.lostScreen:SetText("LOST")
-	self.lostScreen:SetFontSize(128)
-    //self.apple:SetColor(ColorIntToColor(kAlienTeamColor))
-	self.lostScreen:SetPosition(position or Vector(canvasSize.x / 2 , canvasSize.y / 2, 0))
-	self.canvas:AddChild(self.lostScreen)
+    self.lostScreen:SetIsVisible(true)
 end
 
