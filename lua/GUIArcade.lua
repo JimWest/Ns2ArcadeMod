@@ -51,6 +51,11 @@ end
 
 function GUIArcade:Update(deltaTime)
     // update game
+    
+    if self.background:GetIsVisible() then        
+        Client.GetLocalPlayer():BlockMove()
+    end
+    
     if self.game then
         self.game:OnUpdate(deltaTime)
     end

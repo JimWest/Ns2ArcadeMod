@@ -96,8 +96,9 @@ function ThreeDeeMenuMixin:__initmixin()
 
     self.timeLastThreeDeeClick = 0
     self.focused = 0
-    
-    self.textGUIScript = GetGUIManager():CreateGUIScript("GUIArcade")
+
+	self.textGUIScript = GetGUIManager():CreateGUIScript("GUIArcade")
+    SetMoveInputBlocked(true)
     
     self.purchasePressed = false
     
