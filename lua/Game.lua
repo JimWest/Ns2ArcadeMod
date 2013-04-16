@@ -8,7 +8,7 @@
 // Game.lua
 // Base class for all Arcade games
 
-class 'Game' (Entity)
+class 'Game'
 
 function Game:OnCreate(canvas)
     self.canvas = canvas
@@ -23,8 +23,15 @@ function Game:OnUpdate(deltaTime)
     self.pressedKey = {}
 end
 
+function Game:GetAllowedKeys()
+    return {}
+end
+
 function Game:SendKeyEvent(key, down)
-    if down then
-        table.insert(self.pressedKey, key)
-    end
+    //if down then
+        // only save allowed keys
+        if down and table.contains(self:GetAllowedKeys(), key) then
+            table.insert(self.pressedKey, key)
+        end
+    //end
 end

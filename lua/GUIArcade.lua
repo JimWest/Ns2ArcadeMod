@@ -11,15 +11,24 @@
 Script.Load("lua/GUIScript.lua")
 Script.Load("lua/NS2Utility.lua")
 
+Script.Load("lua/Games/Snake.lua")
+
 class 'GUIArcade' (GUIScript)
 
 function GUIArcade:Initialize()
     // create background + game
-    self.game = Game()
+    self:InitializeBackground()
+    
+    
+    self.game = Snake()
     self.game:OnCreate(self:GetBackground())
 end
 
 function GUIArcade:InitializeBackground()
+    GUI.SetSize(512, 512)
+    self.background = GUIManager:CreateGraphicItem()
+    self.background:SetTexture("ui/menu_background.dds")
+    self.background:SetSize(Vector(512, 512,  0))
 end
 
 
@@ -42,17 +51,21 @@ end
 
 function GUIArcade:Update(deltaTime)
     // update game
-    self.game:Update(deltaTime)
+    if self.game then
+        self.game:OnUpdate(deltaTime)
+    end
 end
 
 
 function GUIArcade:SendKeyEvent(key, down)
 
     // check if exitwas pressend, if not, parse key to game
-    if "exit" then
+    //if "exit" then
         // destroy self
-    else
-        self.game:SendKeyEvent(key, down)
-    end
+    //else
+        if self.game then
+            self.game:SendKeyEvent(key, down)
+        end
+    //end
     
 end

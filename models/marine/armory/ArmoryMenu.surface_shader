@@ -1,0 +1,28 @@
+<shader>
+	
+	<inputs>
+		<input name="emissiveMap" type="texture" address="wrap" srgb="true"/>
+	</inputs>
+	
+	<code>
+	<![CDATA[
+		void MaterialShader(in Material_Input input, inout Material material)
+		{
+
+			float wavyAmount = 1;
+			float3 scanColor = float3(0, 0.5, 1);
+			float3 inputColor = float3( input.color.rgb );
+			
+			float ding = 0.7 + sqrt( (1+cos(time)) % 0.8) * 0.3;
+			
+			input.texCoord.x = (input.texCoord.x + cos(time * 8) * 0.0008 + sin(time * 4) * 0.0009);
+
+			float4 morphedTex = tex2D(emissiveMap, input.texCoord);
+			
+			material.emissive = morphedTex.rgb * inputColor * ding * ( 1 + ((time * 0.6 + input.texCoord.x) % 3) * 0.1 );
+			
+		}
+	]]>
+	</code>
+
+</shader>
